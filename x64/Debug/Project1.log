@@ -1,0 +1,15 @@
+﻿  CTSP_element.cpp
+D:\cpp_ws\Project1\CTSP_element.cpp(10,37): warning C4244: “参数”: 从“double”转换到“_Ty”，可能丢失数据
+          with
+          [
+              _Ty=int
+          ]
+  main.cpp
+D:\cpp_ws\Project1\main.cpp(128,57): warning C4267: “参数”: 从“size_t”转换到“int”，可能丢失数据
+D:\cpp_ws\Project1\main.cpp(158,61): warning C4244: “=”: 从“__int64”转换到“_Ty”，可能丢失数据
+          with
+          [
+              _Ty=int
+          ]
+  正在生成代码...
+  Project1.vcxproj -> D:\cpp_ws\Project1\x64\Debug\Project1.exe
