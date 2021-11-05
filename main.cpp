@@ -249,6 +249,10 @@ void test2() {
     }
 }
 
+void test3() {
+    cout << "unfinished" << endl;
+}
+
 int main() {
 	read_data();
     read_color();
