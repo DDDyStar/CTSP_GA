@@ -19,6 +19,7 @@ string colorpath = "D:/cpp_ws/CTSP_GA/" + DataName + to_string(CityNum) + "_" + 
 
 int PopulationNum = 30;
 int InitAlgo = 1;
+double SA_Probability = 0.3;
 
 void print_dist_matrix() {
     for (int i = 0; i < CityNum; i++) {
@@ -225,6 +226,107 @@ Individual getBestIndividual() {
     return *Population[maxIndex];
 }
 
+int roulette() {
+    vector<double> chooseTable;
+    double sum = 0.0;
+    for (int i = 0; i < Population.size(); i++) {
+        chooseTable.push_back(Population[i]->fitness);
+        sum = sum + Population[i]->fitness;
+    }
+    double randomCard = rand() / double(RAND_MAX);
+    int indexResult = -1;
+    double temp, sumTemp = 0.0;
+
+    for (int i = 0; i < Population.size(); i++) {
+        sumTemp += chooseTable[i];
+        temp = sumTemp / sum;
+        if (temp >= randomCard) {
+            indexResult = 1;
+            break;
+        }
+    }
+    return indexResult;
+}
+
+void swap(vector<int>& seq, int index1, int index2) {
+    vector<int> temp = seq;
+    int length = index2 - index1;
+    for (int i = index1; i <= index2; i++) {
+        seq[i] = temp[index2-(i-index1)];
+    }
+}
+
+void two_opt(vector<int>& seq) {
+    if (seq.size() < 3) {
+        return;
+    }
+    vector<int> R_part;
+    int changeResult = 0;
+    int t = getRandomInt(seq.size());
+    R_part.insert(R_part.begin(), seq.begin(), seq.begin() + t);
+    R_part.insert(R_part.begin(), seq.begin() + t, seq.end());
+    seq = R_part;
+    for (int i = 1; i < seq.size() - 2; i++) {
+        for (int j = i + 1; j < seq.size() - 1; j++) {
+            changeResult = -CitiesDistance[seq[i - 1]][seq[i]] - CitiesDistance[seq[j]][seq[j + 1]]
+                + CitiesDistance[seq[i - 1]][seq[j]] + CitiesDistance[seq[i]][seq[j + 1]];
+            if (changeResult < 0) {
+                swap(seq, i, j);
+                j = j + 1;
+            }
+        }
+    }
+}
+
+void swap_cities(vector<int>& vec1, int index1, int index2) {
+    int temp = vec1[index1];
+    vec1[index1] = vec1[index2];
+    vec1[index2] = temp;
+}
+
+void swap_cities(vector<int> &vec1, vector<int> &vec2, int index1, int index2) {
+    int temp = vec1[index1];
+    vec1[index1] = vec2[index2];
+    vec2[index2] = temp;
+}
+
+void insert_opt(vector<int>& seq, string mode="hc") {
+    // parameter: mode
+    //      value: "hc" or "sa"
+    if (seq.size() < 3) {
+        return;
+    }
+    vector<int> R_part;
+    int t = getRandomInt(seq.size());
+    R_part.insert(R_part.begin(), seq.begin(), seq.begin() + t);
+    R_part.insert(R_part.begin(), seq.begin() + t, seq.end());
+    seq = R_part;
+    int changeResult = 0.0;
+
+    for (int i = 1; i < seq.size() - 3; i++) {
+        for (int j = i + 2; j < seq.size() - 1; j++) {
+            changeResult = -CitiesDistance[seq[i - 1]][seq[i]] - CitiesDistance[seq[i]][seq[i + 1]]
+                - CitiesDistance[seq[j - 1]][seq[j]] - CitiesDistance[seq[j]][seq[j + 1]]
+                + CitiesDistance[seq[i - 1]][seq[j]] + CitiesDistance[seq[j]][seq[i + 1]]
+                + CitiesDistance[seq[j - 1]][seq[i]] + CitiesDistance[seq[i]][seq[j + 1]];
+            if (changeResult < 0) {
+                swap_cities(seq, i, j);
+                j = j + 2;
+            }
+            /*else { // unfinished, SA mechanism
+                if (mode == "sa") {
+                    if (get_random_double(1) < SA_Probability) {
+
+                    }
+                }
+            }*/
+        }
+
+    }
+
+    
+}
+
 
 void test1() {
     Individual ind1(SalesmanNum);
@@ -250,13 +352,32 @@ void test2() {
 }
 
 void test3() {
-    cout << "unfinished" << endl;
+    vector<int> testSeq;
+    for (int i = 0; i < 10; i++) {
+        testSeq.push_back(i);
+    }
+    for (int i = 0; i < testSeq.size(); i++) {
+        cout << testSeq[i] << " ";
+    }
+    cout << endl;
+    swap(testSeq, 1, 2);
+    for (int i = 0; i < testSeq.size(); i++) {
+        cout << testSeq[i] << " ";
+    }
+    cout << endl;
+
+    string s1 = "dyx";
+    cout << (s1 == "dyx") << endl;
+    for (int i = 0; i < 5; i++) {
+        cout << get_random_double(1) << endl;
+    }
+    
 }
 
 int main() {
 	read_data();
     read_color();
-    test2();
+    test3();
 	//print_dist_matrix();
     //print_color_matrix();
     //print_city_color(20);`
