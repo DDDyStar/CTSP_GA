@@ -165,6 +165,10 @@ void updateIndividual(int populationIndex) {
     Population[populationIndex]->fitness = 1.0 / (1.0 + total);
 }
 
+void updateIndividualByCost(Individual &ind) {
+
+}
+
 void greedy(vector<int> &seq) {
     int min, minIndex, tempIndex;
     for (int i = 0; i < seq.size()-1; i++) {
@@ -223,7 +227,7 @@ Individual getBestIndividual() {
             maxIndex = i;
         }
     }
-    return *Population[maxIndex];
+    return *(Population[maxIndex]);
 }
 
 int roulette() {
@@ -321,10 +325,49 @@ void insert_opt(vector<int>& seq, string mode="hc") {
                 }
             }*/
         }
-
     }
+}
 
-    
+void mutation(Individual& individual) {
+    // only change colors
+    if (CityNum < 3) {
+        return;
+    }
+    vector<int> seq, color, tx;
+    // double chromosome seq, color, seq represents the tour
+    for (int i = 0; i < 1; i++) {
+        for (int j = 0; j < CityNum; j++) {
+            for (int k = 0; k < SalesmanNum; k++) {
+                if (j < individual.individual_cities[k].size()) {
+                    seq.push_back(individual.individual_cities[k][j]);
+                    color.push_back(k);
+                }
+            }
+        }
+        int locationL = getRandomInt(seq.size() / 2);
+        int locationR = locationL + 1 + getRandomInt(seq.size() / 2);
+        swap_cities(seq, locationL, locationR);
+
+        individual.individual_cities.clear();
+        individual.individual_cities.resize(SalesmanNum);
+
+        int colorTemp1 = color[locationL];
+        if (count(CityColor[seq[locationL]].begin(), CityColor[seq[locationL]].end(), colorTemp1) == 0) {
+            colorTemp1 = CityColor[seq[locationL]][getRandomInt(CityColor[seq[locationL]].size())];
+            color[locationL] = colorTemp1;
+        }
+
+        int colorTemp2 = color[locationR];
+        if (count(CityColor[seq[locationR]].begin(), CityColor[seq[locationR]].end(), colorTemp2) == 0) {
+            colorTemp2 = CityColor[seq[locationR]][getRandomInt(CityColor[seq[locationR]].size())];
+            color[locationR] = colorTemp2;
+        }
+
+        for (int i = 0; i < seq.size(); i++) {
+            individual.individual_cities[color[i]].push_back(i);
+        }
+        individual.individual_cities
+    }
 }
 
 
@@ -371,13 +414,40 @@ void test3() {
     for (int i = 0; i < 5; i++) {
         cout << get_random_double(1) << endl;
     }
+}
+
+void test4() {
+    Individual ind1(SalesmanNum);
+    int index = 0;
+    vector<vector<int>> cities_seq;
+    vector<int> temp_seq;
+    for (int i = 0; i < SalesmanNum; i++) {
+        temp_seq.clear();
+        for (int j = 0; j < 5; j++) {
+            temp_seq.push_back(index);
+            index += 1;
+        }
+        if (i == 3) {
+            temp_seq.push_back(index);
+        }
+        cities_seq.push_back(temp_seq);
+    }
+    ind1.assign_cities(cities_seq);
+    ind1.print_cities();
+    mutation(ind1);
+}
+
+void test_rand() {
+    for (int i = 0; i < 10; i++) {
+        cout << getRandomInt(2) << " ";
+    }
     
 }
 
 int main() {
 	read_data();
     read_color();
-    test3();
+    test_rand();
 	//print_dist_matrix();
     //print_color_matrix();
     //print_city_color(20);`
