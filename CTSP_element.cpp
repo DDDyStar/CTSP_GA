@@ -2,6 +2,7 @@
 
 
 Individual::Individual(int k) {
+	this->salesman_num = k;
 	this->fitness = 0;
 	this->total_distance = 0;
 	this->max_salesman_distance = 0;
@@ -32,6 +33,19 @@ void Individual::assign_cities(vector<vector<int>> cities) {
 	this->individual_cities = cities;
 }
 
+void Individual::update_by_dis() {
+	long long int total = 0;
+	long long int temp = 0;
+	long long int max = 0;
+	for (int i = 0; i < this->salesman_num; i++) {
+		temp = this->salesman_distance[i];
+		max = max > temp ? max : temp;
+		total += temp;
+	}
+	this->total_distance = total;
+	this->max_salesman_distance = max;
+	this->fitness = 1.0 / (1.0 + total);
+}
 
 
 
