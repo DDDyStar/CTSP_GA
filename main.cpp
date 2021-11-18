@@ -165,10 +165,6 @@ void updateIndividual(int populationIndex) {
     Population[populationIndex]->fitness = 1.0 / (1.0 + total);
 }
 
-void updateIndividualByCost(Individual &ind) {
-
-}
-
 void greedy(vector<int> &seq) {
     int min, minIndex, tempIndex;
     for (int i = 0; i < seq.size()-1; i++) {
@@ -366,7 +362,11 @@ void mutation(Individual& individual) {
         for (int i = 0; i < seq.size(); i++) {
             individual.individual_cities[color[i]].push_back(i);
         }
-        individual.individual_cities
+        
+        for (int i = 0; i < SalesmanNum; i++) {
+            individual.salesman_distance[i] = getIndividualSalesDistance(individual.individual_cities[i]);
+        }
+        individual.update_by_dis();
     }
 }
 
