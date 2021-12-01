@@ -4,6 +4,7 @@
 #include"utils_tool.h"
 #include<vector>
 #include<algorithm>
+#include<random>
 using namespace std;
 
 string DataName = "eil";
@@ -256,6 +257,17 @@ void swap(vector<int>& seq, int index1, int index2) {
     }
 }
 
+void swap(vector<int>& seq1, vector<int>& seq2, int index1, int index2) {
+    int temp;
+    for (int i = index1; i <= index2; i++) {
+        temp = seq1[i];
+        seq1[i] = seq2[i];
+        seq2[i] = temp;
+    }
+
+
+}
+
 void two_opt(vector<int>& seq) {
     if (seq.size() < 3) {
         return;
@@ -370,6 +382,75 @@ void mutation(Individual& individual) {
     }
 }
 
+Individual crossover(Individual& ind1, Individual& ind2) {
+
+    vector<int> seq1, seq2, color1, color2;
+    // get two chromesome
+    for (int j = 0; j < CityNum; j++) {
+        for (int k = 0; k < SalesmanNum; k++) {
+            
+            if (j < ind1.individual_cities[k].size()) {
+                seq1.push_back(ind1.individual_cities[k][j]);
+                color1.push_back(k);
+            }
+
+            if (j < ind2.individual_cities[k].size()) {
+                seq2.push_back(ind2.individual_cities[k][j]);
+                color2.push_back(k);
+            }
+        }
+    }
+    int left = getRandomInt(seq1.size() / 2);
+    int right = left + 1 + getRandomInt(seq1.size() / 2);
+    vector<int> seg1, seg2;
+    for (int i = left; i <= right; i++) {
+        seg1.push_back(seq1[i]);
+        seg2.push_back(seq2[i]);
+    }
+    // find the element appeared in the cross part of seq2
+    vector<int> con1, con2;
+    int num1 = 0, num2 = 0;
+    for (int i = 0; i < left; i++) {
+        num1 = count(seq2.begin() + left, seq2.begin() + right + 1, seq1[i]);
+        num2 = count(seq1.begin() + left, seq1.begin() + right + 1, seq2[i]);
+        if (num1 == 1) con1.push_back(seq1[i]);
+        if (num1 == 2) con2.push_back(seq2[i]);
+    }
+
+    for (int i = right+1; i < CityNum; i++) {
+        num1 = count(seq2.begin() + left, seq2.begin() + right + 1, seq1[i]);
+        num2 = count(seq1.begin() + left, seq1.begin() + right + 1, seq2[i]);
+        if (num1 == 1) con1.push_back(seq1[i]);
+        if (num1 == 2) con2.push_back(seq2[i]);
+    }
+
+    // crossover
+    swap(seq1, seq2, left, right);
+    
+    
+    // check
+    int curCity;
+    vector<int>::iterator corPos;
+    for (int i = 0; i < con1.size(); i++) {
+        curCity = seq1[con1[i]];
+        for (int j = left; j <= right; j++) {
+            seq1[con1[i]] = seg1[find(seg2.begin(), seg2.end(), seq1[con1[i]])-seg1.begin()];
+            if (count(seg2.begin(), seg2.end(), seq1[con1[i]]) == 0) {
+                corPos = find(seq2.begin(), seq2.begin() + left, seq1[con1[i]]);
+                if (corPos != seq2.begin() + left) {
+                    seq2[corPos - seq2.begin()] = curCity;
+                }
+                else {
+                    corPos = find(seq2.begin() + right + 1, seq2.end() + left, seq1[con1[i]]);
+                    seq2[corPos - seq2.begin() + right + 1] = curCity;
+                }
+                break;
+            }
+        }
+    }
+    return ind1;
+}
+
 
 void test1() {
     Individual ind1(SalesmanNum);
@@ -437,6 +518,68 @@ void test4() {
     mutation(ind1);
 }
 
+void test5() {
+
+
+    vector<int> seq1, seq2;
+    for (int i = 0; i < 10; i++) {
+        seq1.push_back(i);
+        seq2.push_back(i);
+    }
+
+    int left = 3, right = 6;
+    shuffle(seq2.begin(), seq2.end(), default_random_engine(10));
+    
+
+    vector<int> con1, seg1, seg2;
+    con1.push_back(0);
+    con1.push_back(7);
+    for (int i = left; i <= right; i++) {
+        seg1.push_back(seq1[i]);
+        seg2.push_back(seq2[i]);
+    }
+    swap(seq1, seq2, left, right);
+
+    // check
+    cout << "check" << endl;
+    int curCity;
+    vector<int>::iterator corPos;
+    for (int i = 0; i < con1.size(); i++) {
+        curCity = seq1[con1[i]];
+        for (int j = left; j <= right; j++) {
+            seq1[con1[i]] = seg1[find(seg2.begin(), seg2.end(), seq1[con1[i]]) - seg1.begin()];
+            cout << "criterion" << endl;
+            if (count(seg2.begin(), seg2.end(), seq1[con1[i]]) == 0) {
+                corPos = find(seq2.begin(), seq2.begin() + left, seq1[con1[i]]);
+                if (corPos != seq2.begin() + left) {
+                    seq2[corPos - seq2.begin()] = curCity;
+                }
+                else {
+                    corPos = find(seq2.begin() + right + 1, seq2.end() + left, seq1[con1[i]]);
+                    seq2[corPos - seq2.begin()] = curCity;
+                }
+                break;
+            }
+        }
+    }
+
+    cout << "seq1" << endl;
+    for (int i = 0; i < 10; i++) {
+        cout << seq1[i] << " ";
+    }
+    cout << endl;
+    
+    cout << "seq2" << endl;
+    for (int i = 0; i < 10; i++) {
+        cout << seq2[i] << " ";
+    }
+    cout << endl;
+
+
+
+    
+}
+
 void test_rand() {
     for (int i = 0; i < 10; i++) {
         cout << getRandomInt(2) << " ";
@@ -447,9 +590,10 @@ void test_rand() {
 int main() {
 	read_data();
     read_color();
-    test_rand();
+    test5();
 	//print_dist_matrix();
     //print_color_matrix();
     //print_city_color(20);`
+    
 	return 0;
 }

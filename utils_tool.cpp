@@ -14,4 +14,3 @@ void print_vector_int(vector<int> v) {
 	}
 	cout << endl;
 }
-
