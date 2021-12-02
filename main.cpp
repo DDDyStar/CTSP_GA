@@ -543,11 +543,12 @@ void test5() {
     // check
     cout << "check" << endl;
     int curCity;
-    vector<int>::iterator corPos;
+    vector<int>::iterator corPos, corPos1;
     for (int i = 0; i < con1.size(); i++) {
         curCity = seq1[con1[i]];
+        cout << curCity << endl;
         for (int j = left; j <= right; j++) {
-            seq1[con1[i]] = seg1[find(seg2.begin(), seg2.end(), seq1[con1[i]]) - seg1.begin()];
+            seq1[con1[i]] = seg1[find(seg2.begin(), seg2.end(), seq1[con1[i]]) - seg2.begin()];
             cout << "criterion" << endl;
             if (count(seg2.begin(), seg2.end(), seq1[con1[i]]) == 0) {
                 corPos = find(seq2.begin(), seq2.begin() + left, seq1[con1[i]]);
