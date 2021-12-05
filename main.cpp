@@ -166,6 +166,21 @@ void updateIndividual(int populationIndex) {
     Population[populationIndex]->fitness = 1.0 / (1.0 + total);
 }
 
+void updateIndividual(Individual &ind) {
+    long long int total = 0;
+    long long int temp = 0;
+    long long int max = 0;
+    for (int i = 0; i < SalesmanNum; i++) {
+        temp = getIndividualSalesDistance(ind.individual_cities[i]);
+        ind.salesman_distance[i] = temp;
+        max = max > temp ? max : temp;
+        total += temp;
+    }
+    ind.total_distance = total;
+    ind.max_salesman_distance = max;
+    ind.fitness = 1.0 / (1.0 + total);
+}
+
 void greedy(vector<int> &seq) {
     int min, minIndex, tempIndex;
     for (int i = 0; i < seq.size()-1; i++) {
@@ -400,12 +415,24 @@ Individual crossover(Individual& ind1, Individual& ind2) {
             }
         }
     }
+
+    cout << "---seq1---" << endl;
+    print_vector_int(seq1);
+    print_vector_int(color1);
+    cout << "---seq2---" << endl;
+    print_vector_int(seq2);
+    print_vector_int(color2);
+    
+
     int left = getRandomInt(seq1.size() / 2);
     int right = left + 1 + getRandomInt(seq1.size() / 2);
-    vector<int> seg1, seg2;
+    cout << "change position:" << left << " " << right << endl;
+    vector<int> seg1, seg2, colorSeg1, colorSeg2;
     for (int i = left; i <= right; i++) {
         seg1.push_back(seq1[i]);
         seg2.push_back(seq2[i]);
+        colorSeg1.push_back(color1[i]);
+        colorSeg2.push_back(color2[i]);
     }
     // find the element appeared in the cross part of seq2
     vector<int> con1, con2;
@@ -413,42 +440,72 @@ Individual crossover(Individual& ind1, Individual& ind2) {
     for (int i = 0; i < left; i++) {
         num1 = count(seq2.begin() + left, seq2.begin() + right + 1, seq1[i]);
         num2 = count(seq1.begin() + left, seq1.begin() + right + 1, seq2[i]);
-        if (num1 == 1) con1.push_back(seq1[i]);
-        if (num1 == 2) con2.push_back(seq2[i]);
+        if (num1 == 1) con1.push_back(i);
+        if (num2 == 1) con2.push_back(i);
     }
 
     for (int i = right+1; i < CityNum; i++) {
         num1 = count(seq2.begin() + left, seq2.begin() + right + 1, seq1[i]);
         num2 = count(seq1.begin() + left, seq1.begin() + right + 1, seq2[i]);
-        if (num1 == 1) con1.push_back(seq1[i]);
-        if (num1 == 2) con2.push_back(seq2[i]);
+        if (num1 == 1) con1.push_back(i);
+        if (num2 == 1) con2.push_back(i);
     }
 
     // crossover
     swap(seq1, seq2, left, right);
+    swap(color1, color2, left, right);
     
     
     // check
-    int curCity;
-    vector<int>::iterator corPos;
+    int curCity, curColor;
+    vector<int>::iterator corPos, segPos;
+    cout << "checking..." << endl;
+
     for (int i = 0; i < con1.size(); i++) {
         curCity = seq1[con1[i]];
+        curColor = color1[con1[i]];
+        cout << curCity << endl;
         for (int j = left; j <= right; j++) {
-            seq1[con1[i]] = seg1[find(seg2.begin(), seg2.end(), seq1[con1[i]])-seg1.begin()];
+            segPos = find(seg2.begin(), seg2.end(), seq1[con1[i]]);
+            seq1[con1[i]] = seg1[segPos - seg2.begin()];
+            color1[con1[i]] = colorSeg1[segPos - seg2.begin()];
+            cout << "criterion" << endl;
             if (count(seg2.begin(), seg2.end(), seq1[con1[i]]) == 0) {
                 corPos = find(seq2.begin(), seq2.begin() + left, seq1[con1[i]]);
                 if (corPos != seq2.begin() + left) {
                     seq2[corPos - seq2.begin()] = curCity;
+                    color2[corPos - seq2.begin()] = curColor;
                 }
                 else {
                     corPos = find(seq2.begin() + right + 1, seq2.end() + left, seq1[con1[i]]);
-                    seq2[corPos - seq2.begin() + right + 1] = curCity;
+                    seq2[corPos - seq2.begin()] = curCity;
+                    color2[corPos - seq2.begin()] = curColor;
                 }
                 break;
             }
         }
     }
-    return ind1;
+    cout << "---seq1---" << endl;
+    print_vector_int(seq1);
+    print_vector_int(color1);
+    cout << "---seq2---" << endl;
+    print_vector_int(seq2);
+    print_vector_int(color2);
+
+
+    ind1.chromosome2seq(seq1, color1);
+    updateIndividual(ind1);
+    ind2.chromosome2seq(seq2, color2);
+    updateIndividual(ind2);
+
+    cout << ind1.fitness << " fit " << ind2.fitness << endl;
+
+    if (ind1.fitness > ind2.fitness) {
+        return ind1;
+    }
+    else {
+        return ind2;
+    }
 }
 
 
@@ -519,66 +576,61 @@ void test4() {
 }
 
 void test5() {
+    vector<int> seq1, seq2;
+    for (int i = 0; i < CityNum; i++) {
+        seq1.push_back(i);
+        seq2.push_back(i);
+    }
 
+    shuffle(seq2.begin(), seq2.end(), default_random_engine(10));
 
+    int index = 0;
+    vector<vector<int>> cities_seq1, cities_seq2;
+    vector<int> temp_seq1, temp_seq2;
+    for (int i = 0; i < SalesmanNum; i++) {
+        temp_seq1.clear();
+        temp_seq2.clear();
+        for (int j = 0; j < 5; j++) {
+            temp_seq1.push_back(seq1[index]);
+            temp_seq2.push_back(seq2[index]);
+            index += 1;
+        }
+        if (i == 3) {
+            temp_seq1.push_back(seq1[index]);
+            temp_seq2.push_back(seq2[index]);
+        }
+        cities_seq1.push_back(temp_seq1);
+        cities_seq2.push_back(temp_seq2);
+    }
+
+    Individual ind1(SalesmanNum), ind2(SalesmanNum);
+    ind1.assign_cities(cities_seq1);
+    ind2.assign_cities(cities_seq2);
+
+    cout << "cross over..." << endl;
+    Individual new_ind = crossover(ind1, ind2);
+}
+
+void cross_test() {
     vector<int> seq1, seq2;
     for (int i = 0; i < 10; i++) {
         seq1.push_back(i);
         seq2.push_back(i);
     }
+    shuffle(seq2.begin(), seq2.end(), default_random_engine(10));
+
+    vector<vector<int>> cities1, cities2;
+    int index = 0;
+    for (int i = 0; i < SalesmanNum; i++) {
+        for(int j=0; j<5; j++)
+        seq1.push_back(i);
+        seq2.push_back(i);
+        index += 1;
+    }
 
     int left = 3, right = 6;
     shuffle(seq2.begin(), seq2.end(), default_random_engine(10));
-    
-
-    vector<int> con1, seg1, seg2;
-    con1.push_back(0);
-    con1.push_back(7);
-    for (int i = left; i <= right; i++) {
-        seg1.push_back(seq1[i]);
-        seg2.push_back(seq2[i]);
-    }
-    swap(seq1, seq2, left, right);
-
-    // check
-    cout << "check" << endl;
-    int curCity;
-    vector<int>::iterator corPos, corPos1;
-    for (int i = 0; i < con1.size(); i++) {
-        curCity = seq1[con1[i]];
-        cout << curCity << endl;
-        for (int j = left; j <= right; j++) {
-            seq1[con1[i]] = seg1[find(seg2.begin(), seg2.end(), seq1[con1[i]]) - seg2.begin()];
-            cout << "criterion" << endl;
-            if (count(seg2.begin(), seg2.end(), seq1[con1[i]]) == 0) {
-                corPos = find(seq2.begin(), seq2.begin() + left, seq1[con1[i]]);
-                if (corPos != seq2.begin() + left) {
-                    seq2[corPos - seq2.begin()] = curCity;
-                }
-                else {
-                    corPos = find(seq2.begin() + right + 1, seq2.end() + left, seq1[con1[i]]);
-                    seq2[corPos - seq2.begin()] = curCity;
-                }
-                break;
-            }
-        }
-    }
-
-    cout << "seq1" << endl;
-    for (int i = 0; i < 10; i++) {
-        cout << seq1[i] << " ";
-    }
-    cout << endl;
-    
-    cout << "seq2" << endl;
-    for (int i = 0; i < 10; i++) {
-        cout << seq2[i] << " ";
-    }
-    cout << endl;
-
-
-
-    
+    Individual ind1(SalesmanNum), ind2(SalesmanNum);
 }
 
 void test_rand() {

@@ -10,10 +10,22 @@ Individual::Individual(int k) {
 	for (int i = 0; i < k; i++) {
 		this->salesman_distance.push_back(0.);
 	}
-	
+}
+
+Individual::Individual(int k, int id) {
+	this->salesman_num = k;
+	this->fitness = 0;
+	this->total_distance = 0;
+	this->max_salesman_distance = 0;
+	this->individual_cities;
+	this->ind_id = id;
+	for (int i = 0; i < k; i++) {
+		this->salesman_distance.push_back(0.);
+	}
 }
 
 void Individual::print_cities() {
+	cout << "---ind" << this->ind_id << "---" << endl;
 	for (int i = 0; i < this->individual_cities.size(); i++) {
 		for (int j = 0; j < this->individual_cities[i].size(); j++) {
 			cout << this->individual_cities[i][j] << " ";
@@ -33,6 +45,7 @@ void Individual::assign_cities(vector<vector<int>> cities) {
 	this->individual_cities = cities;
 }
 
+
 void Individual::update_by_dis() {
 	long long int total = 0;
 	long long int temp = 0;
@@ -47,6 +60,15 @@ void Individual::update_by_dis() {
 	this->fitness = 1.0 / (1.0 + total);
 }
 
+void Individual::chromosome2seq(vector<int>& chromosome, vector<int> &color) {
+	for (int i = 0; i < this->salesman_num; i++) {
+		this->individual_cities[i].clear();
+	}
+
+	for (int i = 0; i < chromosome.size(); i++) {
+		this->individual_cities[color[i]].push_back(chromosome[i]);
+	}
+}
 
 
 int dist(Point *a, Point *b)
