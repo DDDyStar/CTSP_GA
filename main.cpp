@@ -8,19 +8,24 @@
 using namespace std;
 
 string DataName = "eil";
+double ccp = 0.7;
+double mp = 0.1;
 int CityNum = 21;
 int SalesmanNum = 4;
+double MAX_time = 120.0;
 int** CitiesDistance;
 int** ColorMatrix;
 vector<vector<int>> CityColor(CityNum, vector<int>());
 vector<Point*> PointSet;
-vector<Individual*> Population;
+vector<Individual> Population;
 string datapath = "D:/cpp_ws/CTSP_GA/" + DataName + to_string(CityNum) + ".txt";
 string colorpath = "D:/cpp_ws/CTSP_GA/" + DataName + to_string(CityNum) + "_" + to_string(SalesmanNum) + ".txt";
 
 int PopulationNum = 30;
 int InitAlgo = 1;
 double SA_Probability = 0.3;
+Individual bestIndividual(SalesmanNum);
+int localSearchChoice = 1;
 
 void print_dist_matrix() {
     for (int i = 0; i < CityNum; i++) {
@@ -156,14 +161,14 @@ void updateIndividual(int populationIndex) {
     long long int temp = 0;
     long long int max = 0;
     for (int i = 0; i < SalesmanNum; i++) {
-        temp = getIndividualSalesDistance(Population[populationIndex]->individual_cities[i]);
-        Population[populationIndex]->salesman_distance[i] = temp;
+        temp = getIndividualSalesDistance(Population[populationIndex].individual_cities[i]);
+        Population[populationIndex].salesman_distance[i] = temp;
         max = max > temp ? max : temp;
         total += temp;
     }
-    Population[populationIndex]->total_distance = total;
-    Population[populationIndex]->max_salesman_distance = max;
-    Population[populationIndex]->fitness = 1.0 / (1.0 + total);
+    Population[populationIndex].total_distance = total;
+    Population[populationIndex].max_salesman_distance = max;
+    Population[populationIndex].fitness = 1.0 / (1.0 + total);
 }
 
 void updateIndividual(Individual &ind) {
@@ -202,28 +207,28 @@ void greedy(vector<int> &seq) {
 
 void createPopulation() {
     for (int i = 0; i < PopulationNum; i++) {
-        Population.push_back(new Individual(SalesmanNum));
+        Population.push_back(Individual(SalesmanNum));
     }
 }
 
-void clearPopulation() {
-    for (int i = 0; i < PopulationNum; i++) {
-        delete Population[i];
-    }
-    Population.clear();
-}
+//void clearPopulation() {
+//    for (int i = 0; i < PopulationNum; i++) {
+//        delete Population[i];
+//    }
+//    Population.clear();
+//}
 
 void populationInit() {
     if (!Population.empty()) {
-        clearPopulation();
+        Population.clear();
     }
     createPopulation();
     for (int i = 0; i < Population.size(); i++) {
-        Population[i]->individual_cities.clear();
-        Population[i]->individual_cities = initCitiesSeq();
+        Population[i].individual_cities.clear();
+        Population[i].individual_cities = initCitiesSeq();
         if (InitAlgo == 1) {
             for (int j = 0; j < SalesmanNum; j++) {
-                greedy(Population[i]->individual_cities[j]);
+                greedy(Population[i].individual_cities[j]);
             }
         }
         updateIndividual(i);
@@ -234,26 +239,26 @@ Individual getBestIndividual() {
     double max = 0;
     int maxIndex = 0;
     for (int i = 0; i < Population.size(); i++) {
-        if (max < Population[i]->fitness) {
-            max = Population[i]->fitness;
+        if (max < Population[i].fitness) {
+            max = Population[i].fitness;
             maxIndex = i;
         }
     }
-    return *(Population[maxIndex]);
+    return Population[maxIndex];
 }
 
-int roulette() {
+int roulette(vector<Individual> population) {
     vector<double> chooseTable;
     double sum = 0.0;
-    for (int i = 0; i < Population.size(); i++) {
-        chooseTable.push_back(Population[i]->fitness);
-        sum = sum + Population[i]->fitness;
+    for (int i = 0; i < population.size(); i++) {
+        chooseTable.push_back(population[i].fitness);
+        sum = sum + population[i].fitness;
     }
     double randomCard = rand() / double(RAND_MAX);
     int indexResult = -1;
     double temp, sumTemp = 0.0;
 
-    for (int i = 0; i < Population.size(); i++) {
+    for (int i = 0; i < population.size(); i++) {
         sumTemp += chooseTable[i];
         temp = sumTemp / sum;
         if (temp >= randomCard) {
@@ -509,28 +514,66 @@ Individual crossover(Individual& ind1, Individual& ind2) {
 }
 
 
-void test1() {
-    Individual ind1(SalesmanNum);
-    Population.push_back(&ind1);
-    ind1.individual_cities = initCitiesSeq();
-    updateIndividual(0);
-    ind1.print_distance();
-    for (int i = 0; i < Population[0]->individual_cities.size(); i++) {
-        greedy(Population[0]->individual_cities[i]);
-    }
-    updateIndividual(0);
-    ind1.print_distance();
-
-}
-
-void test2() {
-    populationInit();
-    for (int i = 0; i < Population.size(); i++) {
-        cout << "-------" << endl;
-        Population[i]->print_distance();
-        Population[i]->print_cities();
+void localSearch(Individual &ind) {
+    for (int i = 0; i < ind.individual_cities.size(); i++) {
+        switch (localSearchChoice)
+        {
+        case 1:
+            insert_opt(ind.individual_cities[i]);
+        default:
+            break;
+        }
     }
 }
+double GetTime()
+{
+    return (double)clock() / CLOCKS_PER_SEC;
+}
+
+int GA() {
+    vector<Individual> nextGenerationPopulation;
+    Individual ind = bestIndividual;
+    int generationIndex = 1;
+    double CPU_time, LastTime = GetTime();
+    while (true) {
+        nextGenerationPopulation.clear();
+        localSearch(ind);
+        updateIndividual(ind);
+        nextGenerationPopulation.push_back(ind);
+        while (nextGenerationPopulation.size() != Population.size()) {
+            int A = roulette(Population);
+            Individual suc = Population[A];
+            if (rand() / RAND_MAX < ccp) {
+                int B = roulette(Population);
+                Individual rouletteSelectIndividualB = Population[B];
+                while (A == B) {
+                    B = roulette(Population);
+                    Individual rouletteSelectIndividualB = Population[B];
+                }
+                suc = crossover(suc, rouletteSelectIndividualB);
+            }
+            if (rand() / RAND_MAX < mp) {
+                mutation(suc);
+            }
+            nextGenerationPopulation.push_back(suc);
+        }
+        Population.clear();
+        Population = nextGenerationPopulation;
+
+        ind = getBestIndividual();
+
+        if (ind.fitness > bestIndividual.fitness) {
+            bestIndividual = ind;
+        }
+
+        CPU_time = fabs(GetTime() - LastTime);
+        if (CPU_time >= MAX_time) { break; }
+        else { generationIndex += 1; }
+    }
+    return generationIndex;
+}
+
+
 
 void test3() {
     vector<int> testSeq;
